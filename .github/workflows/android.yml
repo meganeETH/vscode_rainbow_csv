@@ -25,6 +25,21 @@ jobs:
         with:
           lfs: true
 
+      # Godot 4.x validates that a debug keystore is available before it will
+      # export an Android build. The godot-export action does not provide one,
+      # so we generate the standard Android debug keystore and hand it to Godot
+      # through the GODOT_ANDROID_KEYSTORE_DEBUG_* environment variables.
+      - name: Generate Android debug keystore
+        run: |
+          keytool -keyalg RSA -genkeypair \
+            -alias androiddebugkey \
+            -keypass android \
+            -keystore "$RUNNER_TEMP/debug.keystore" \
+            -storepass android \
+            -dname "CN=Android Debug,O=Android,C=US" \
+            -validity 9999 \
+            -deststoretype pkcs12
+
       - name: Export Android debug APK
         id: export
         uses: firebelley/godot-export@v6.0.0
@@ -35,8 +50,12 @@ jobs:
           export_debug: true
           archive_output: false
           cache: false
+          verbose: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ runner.temp }}/debug.keystore
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
 
       - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
