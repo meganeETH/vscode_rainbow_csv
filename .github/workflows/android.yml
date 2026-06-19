@@ -1,0 +1,46 @@
+name: Android Debug Build
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - "claude/**"
+    paths:
+      - "swipe-shooter-puzzle/**"
+      - ".github/workflows/android.yml"
+  pull_request:
+    paths:
+      - "swipe-shooter-puzzle/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+jobs:
+  export-android-debug:
+    name: Export debug APK (arm64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Export Android debug APK
+        id: export
+        uses: firebelley/godot-export@v6.0.0
+        with:
+          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
+          relative_project_path: ./swipe-shooter-puzzle
+          export_debug: true
+          archive_output: false
+          cache: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: swipe-shooter-puzzle-debug-apk
+          path: ${{ steps.export.outputs.build_directory }}
+          if-no-files-found: error
