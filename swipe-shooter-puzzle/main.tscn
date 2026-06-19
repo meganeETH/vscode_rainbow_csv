@@ -1,18 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://b1swipeshooter0"]
 
-[sub_resource type="GDScript" id="GDScript_main"]
-script/source = "extends Node2D
+[ext_resource type="Script" path="res://scripts/game.gd" id="1_game"]
 
-func _ready() -> void:
-	print(\"Swipe Shooter Puzzle - debug build OK\")
-"
-
-[node name="Main" type="Node2D"]
-script = SubResource("GDScript_main")
-
-[node name="Label" type="Label" parent="."]
-offset_left = 40.0
-offset_top = 40.0
-offset_right = 400.0
-offset_bottom = 80.0
-text = "Swipe Shooter Puzzle"
+[node name="Game" type="Node2D"]
+script = ExtResource("1_game")
