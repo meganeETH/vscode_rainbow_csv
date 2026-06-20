@@ -1,0 +1,65 @@
+name: Android Debug Build
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - "claude/**"
+    paths:
+      - "swipe-shooter-puzzle/**"
+      - ".github/workflows/android.yml"
+  pull_request:
+    paths:
+      - "swipe-shooter-puzzle/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+jobs:
+  export-android-debug:
+    name: Export debug APK (arm64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # Godot 4.x validates that a debug keystore is available before it will
+      # export an Android build. The godot-export action does not provide one,
+      # so we generate the standard Android debug keystore and hand it to Godot
+      # through the GODOT_ANDROID_KEYSTORE_DEBUG_* environment variables.
+      - name: Generate Android debug keystore
+        run: |
+          keytool -keyalg RSA -genkeypair \
+            -alias androiddebugkey \
+            -keypass android \
+            -keystore "$RUNNER_TEMP/debug.keystore" \
+            -storepass android \
+            -dname "CN=Android Debug,O=Android,C=US" \
+            -validity 9999 \
+            -deststoretype pkcs12
+
+      - name: Export Android debug APK
+        id: export
+        uses: firebelley/godot-export@v6.0.0
+        with:
+          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
+          relative_project_path: ./swipe-shooter-puzzle
+          export_debug: true
+          archive_output: false
+          cache: false
+          verbose: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ runner.temp }}/debug.keystore
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
+
+      - name: Upload debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: swipe-shooter-puzzle-debug-apk
+          path: ${{ steps.export.outputs.build_directory }}
+          if-no-files-found: error
