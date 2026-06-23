@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.mp4
+frame.png
+plan.png
+demo.mp4
+points.json
